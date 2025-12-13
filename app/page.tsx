@@ -96,7 +96,7 @@ export default function Home() {
               <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>Acceso Premium</h2>
               <p style={{ color: 'var(--muted)', marginBottom: '2rem' }}>Obtén acceso ilimitado a todos los recursos de la plataforma.</p>
               <div className={styles.price}>
-                19.99€ <span>/mes</span>
+                4.99€ <span style={{ fontSize: '1rem' }}>pago único</span>
               </div>
               <ul className={styles.list}>
                 <li>✅ Acceso a todos los videos</li>
