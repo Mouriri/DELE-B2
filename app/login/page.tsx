@@ -3,59 +3,30 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./login.module.css";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "@/lib/firebase";
 
 export default function LoginPage() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<"admin" | "student">("student");
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    // Admin Form
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-
-    // Student Form
-    const [accessCode, setAccessCode] = useState("");
-
-    const handleAdminLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleGoogleLogin = async () => {
         setLoading(true);
         setError("");
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            router.push("/admin");
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+
+            // Check if admin (hardcoded for now, ideally check database)
+            if (user.email === "mouriri@gmail.com") { // Replace with actual admin email if known, or let logic handle it
+                router.push("/admin");
+            } else {
+                router.push("/dashboard");
+            }
         } catch (err: any) {
             console.error(err);
-            setError("Credenciales incorrectas o error de conexión.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleStudentLogin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-
-        try {
-            // Buscar el código en la colección 'access_codes'
-            const q = query(collection(db, "access_codes"), where("code", "==", accessCode.trim()));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                // Código válido
-                // Guardamos una "sesión" simple en localStorage
-                localStorage.setItem("student_access_token", accessCode);
-                router.push("/dashboard");
-            } else {
-                setError("Código de acceso inválido.");
-            }
-        } catch (err) {
-            console.error(err);
-            setError("Error verificando el código.");
+            setError("Error iniciando sesión con Google. Inténtalo de nuevo.");
         } finally {
             setLoading(false);
         }
@@ -64,24 +35,9 @@ export default function LoginPage() {
     return (
         <div className={styles.loginContainer}>
             <div className={styles.loginCard}>
-                <div className={styles.tabs}>
-                    <div
-                        className={`${styles.tab} ${activeTab === "student" ? styles.activeTab : ""}`}
-                        onClick={() => setActiveTab("student")}
-                    >
-                        Soy Alumno
-                    </div>
-                    <div
-                        className={`${styles.tab} ${activeTab === "admin" ? styles.activeTab : ""}`}
-                        onClick={() => setActiveTab("admin")}
-                    >
-                        Administrador
-                    </div>
-                </div>
-
-                <h1 className={styles.title}>Bienvenido</h1>
+                <h1 className={styles.title}>Iniciar Sesión</h1>
                 <p className={styles.subtitle}>
-                    {activeTab === "student" ? "Introduce tu código de acceso para entrar." : "Panel de gestión solo para administradores."}
+                    Accede con tu cuenta de Google para continuar.
                 </p>
 
                 {error && (
@@ -90,52 +46,15 @@ export default function LoginPage() {
                     </div>
                 )}
 
-                {activeTab === "student" ? (
-                    <form onSubmit={handleStudentLogin}>
-                        <div className="mb-4">
-                            <label className="label">Código de Acceso</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="Ej. ABC-123-XYZ"
-                                value={accessCode}
-                                onChange={(e) => setAccessCode(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                            {loading ? "Verificando..." : "Entrar al Curso"}
-                        </button>
-                    </form>
-                ) : (
-                    <form onSubmit={handleAdminLogin}>
-                        <div className="mb-4">
-                            <label className="label">Email</label>
-                            <input
-                                type="email"
-                                className="input"
-                                placeholder="admin@ejemplo.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="mb-6">
-                            <label className="label">Contraseña</label>
-                            <input
-                                type="password"
-                                className="input"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
-                            {loading ? "Entrando..." : "Iniciar Sesión"}
-                        </button>
-                    </form>
-                )}
+                <button
+                    onClick={handleGoogleLogin}
+                    className="btn w-full flex items-center justify-center gap-2"
+                    style={{ background: 'white', color: '#444', border: '1px solid #ccc' }}
+                    disabled={loading}
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5" />
+                    {loading ? "Entrando..." : "Entrar con Google"}
+                </button>
             </div>
         </div>
     );
