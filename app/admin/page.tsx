@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import styles from "./admin.module.css";
 import Link from "next/link";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 interface Video {
     id: string;
@@ -37,31 +39,52 @@ export default function AdminPage() {
     const [videoForm, setVideoForm] = useState({ title: "", url: "" });
     const [examForm, setExamForm] = useState({ title: "", link: "" });
     const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState<any>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (u) => {
+            if (!u) {
+                router.push("/login");
+            } else {
+                setUser(u);
+            }
+        });
+        return () => unsubscribe();
+    }, [router]);
 
     // Cargar datos en tiempo real
     useEffect(() => {
+        if (!user) return;
+
+        const handleSnapshotError = (error: any) => {
+            console.error("Error fetching data:", error);
+            // If permission denied, we might verify expected behavior, but definitely stop loading spinner
+            setLoading(false);
+        };
+
         const unsubVideos = onSnapshot(collection(db, "videos"), (snapshot) => {
             const vids = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Video));
             setVideos(vids);
-        });
+        }, handleSnapshotError);
 
         const unsubExams = onSnapshot(collection(db, "exams"), (snapshot) => {
             const exs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam));
             setExams(exs);
-        });
+        }, handleSnapshotError);
 
         const unsubCodes = onSnapshot(collection(db, "access_codes"), (snapshot) => {
             const cds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AccessCode));
             setCodes(cds);
             setLoading(false);
-        });
+        }, handleSnapshotError);
 
         return () => {
             unsubVideos();
             unsubExams();
             unsubCodes();
         };
-    }, []);
+    }, [user]);
 
     const handleAddVideo = async (e: React.FormEvent) => {
         e.preventDefault();

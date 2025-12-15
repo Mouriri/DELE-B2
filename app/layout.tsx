@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Castellano con MH",
   description: "Plataforma de aprendizaje de Castellano con MH - Videos y Examenes",
+  viewport: "width=device-width, initial-scale=1",
 };
 
 export default function RootLayout({
