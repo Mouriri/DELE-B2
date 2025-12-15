@@ -26,7 +26,7 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             console.error(err);
-            setError("Error iniciando sesión con Google. Inténtalo de nuevo.");
+            setError(`Error: ${err.message}`);
         } finally {
             setLoading(false);
         }

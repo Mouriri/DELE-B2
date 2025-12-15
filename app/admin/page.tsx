@@ -148,7 +148,7 @@ export default function AdminPage() {
                     >
                         Códigos Acceso
                     </div>
-                    <Link href="/" className={styles.navItem} style={{ marginTop: '2rem' }}>
+                    <Link href="/" className={`${styles.navItem} ${styles.navItemSeparated}`}>
                         ← Volver al Sitio
                     </Link>
                     <Link href="/dashboard" className={styles.navItem}>
